@@ -7,19 +7,20 @@ import subprocess
 def toolHandle(call):
     args = json.loads(call.function.arguments)
 
-    if(call.function.name == "Read"):
+    if call.function.name == "Read":
         f = open(args["file_path"])
         return f.read()
 
-    if(call.function.name == "Write"):
-        dir_path = os.path.dirname(args["file_path"])
+    if call.function.name == "Write":
+        file_path = args["file_path"]
+        dir_path = os.path.dirname(file_path)
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-            with open(args["file_path"], "w", encoding="utf-8") as f:
-                f.write(args["content"])
-                return f"file written in: {args["file_path"]}"
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(args["content"])
+            return f"file written in: {file_path}"
 
-    if(call.function.name == "Bash"):
+    if call.function.name == "Bash":
         command = args["command"]
         try:
             result = subprocess.run(
@@ -37,3 +38,5 @@ def toolHandle(call):
             return result.stdout
 
         return (result.stdout or "") + (result.stderr or "") or f"Errore: exit code {result.returncode}"
+
+    raise ValueError(f"Unknown tool: {call.function.name}")

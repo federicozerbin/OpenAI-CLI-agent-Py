@@ -5,13 +5,12 @@ import sys
 import json
 import subprocess
 import yaml
-from app.agent import startAgent
 
 def skillHandle(userPrompt):
     skills = loadSkills()
     systemPrompt = buildSystemPrompt(skills)
     resolvedUserPrompts = resolvePrompt(userPrompt, skills)
-    return { "skills": skills, "systemPrompt": systemPrompt, "resolvedUserPrompts": resolvedUserPrompts }
+    return skills, systemPrompt, resolvedUserPrompts
 
 #loads skills into array
 def loadSkills():
@@ -31,50 +30,62 @@ def loadSkills():
         if not os.path.exists(file):
             continue
 
-        with open(file, "r") as f:
+        with open(file, "r", encoding="utf-8") as f:
             content = f.read()
         #check if contains frontmatter between "---" and extract it
-        match = content.match(r"^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$")
+        match = re.match(r"^---\r?\n(.*?)\r?\n---\r?\n?(.*)$", content, re.DOTALL)
         if not match:
             continue
 
         #parse it to add it to the skills
-        meta = yaml.safe_load(match[1]) if match[1] else {}
+        try:
+            meta = yaml.safe_load(match.group(1)) or {}
+        except yaml.YAMLError as e:
+            print(f"Frontmatter non valido in {file}: {e}", file=sys.stderr)
+            continue
+        if not isinstance(meta, dict):
+            meta = {}
+
         skills.append({
             "name": meta.get("name") or entry,
             "description": meta.get("description") or "",
             "context": meta.get("context"),
-            "body": match[2].strip() if match[2] else ""
+            "body": match.group(2).strip(),
         })
     
     return skills
 
 #runskill searches for context, called by agent if theres a skill
 def runSkill(client, model, tools, skills, params):
-    name, args = params.name, params.args
+    from app.agent import startAgent
+    name, args = params.get("name"), params.get("args")
     expanded = expandSkill(skills, name, args)
     if not expanded:
         return f"Error: skill '{params.name}' not found"
 
     #skill with no context return body
-    if expanded.skill.context != "fork":
-        return expanded.text
+    if expanded["skill"]["context"] != "fork":
+        return expanded["text"]
 
     #skill with context has a subagent
-    subMessages = [{"role": "user", "content": expanded.text}]
+    subMessages = [{"role": "user", "content": expanded["text"]}]
     answer = startAgent(client, model, subMessages, tools, skills)
 
     return f"Skill {params.name} ran in a separate context and returned: {answer}";
 
 def buildSystemPrompt(skills):
-    list_items = [f"- {s['name']}: {s['description']}" for s in skills]
-    return f"You have access to the following skills:\n\n{'\n'.join(list_items)}\n\nIf a skill matches the user's request, call the Skill tool with its name\nand follow the instructions it returns."
+    items = "\n".join(f"- {s['name']}: {s['description']}" for s in skills)
+    return (
+        f"You have access to the following skills:\n\n{items}\n\n"
+        "If a skill matches the user's request, call the Skill tool with its name\n"
+        "and follow the instructions it returns."
+    )
 
 #builds the user prompt with positional args tokens
 def resolvePrompt(prompt, skills):
 
     #splits prompt (each token is a skill or ARGUMENT)
-    tokens = prompt.trim().split(r'\s+')
+    tokens = prompt.strip().split()
     used = []
     i = 0
 
@@ -96,18 +107,25 @@ def resolvePrompt(prompt, skills):
     rest = tokens[i:]
     return [{
         "role": "user",
-        "content": fillBody(skill.body, rest),
+        "content": fillBody(skill["body"], rest),
     } for skill in used]
 
 # fills a single body with positional token ARGUMENTS
-def fillBody(body, tokens, appendArgs = True):
+def fillBody(body, tokens, appendArgs=True):
     args = " ".join(tokens)
 
     if not re.search(r'\$ARGUMENTS|\$\d+', body):
-        return args and appendArgs and f"{body}\n\nARGUMENTS: {args}" or body
+        if args and appendArgs:
+            return f"{body}\n\nARGUMENTS: {args}"
+        return body
 
-    return re.sub(r'\$ARGUMENTS|\$(\d+)', lambda m: args if m.group(1) is None else (tokens[int(m.group(1))] if 0 <= int(m.group(1)) < len(tokens) else ""), body)
+    def replace(m):
+        if m.group(1) is None:        # $ARGUMENTS
+            return args
+        i = int(m.group(1))           # $0, $1, ...
+        return tokens[i] if i < len(tokens) else ""
 
+    return re.sub(r'\$ARGUMENTS|\$(\d+)', replace, body)
 
 #for subagent skill calls
 def expandSkill(skills, name, args):

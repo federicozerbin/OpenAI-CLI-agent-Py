@@ -4,6 +4,7 @@ import os
 
 from openai import OpenAI
 from app.agent import startAgent
+from app.skills import skillHandle
 
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
@@ -63,6 +64,21 @@ TOOLS = [{
       }
     }
   }
+},
+{
+    "type": "function",
+    "function": {
+        "name": "Skill",
+        "description": "Execute a skill by name",
+        "parameters": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+                "name": {"type": "string", "description": "The skill name"},
+                "args": {"type": "string", "description": "Optional arguments for the skill"},
+            },
+        },
+    },
 }
 ]
 
