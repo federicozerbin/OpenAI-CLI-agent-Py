@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import json
+import subprocess
 
 def toolHandle(call):
     args = json.loads(call.function.arguments)
@@ -17,3 +18,22 @@ def toolHandle(call):
             with open(args["file_path"], "w", encoding="utf-8") as f:
                 f.write(args["content"])
                 return f"file written in: {args["file_path"]}"
+
+    if(call.function.name == "Bash"):
+        command = args["command"]
+        try:
+            result = subprocess.run(
+                command,
+                shell=True,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                stdin=subprocess.DEVNULL,
+            )
+        except Exception as e:
+            return f"Error: {e}"
+
+        if result.returncode == 0:
+            return result.stdout
+
+        return (result.stdout or "") + (result.stderr or "") or f"Errore: exit code {result.returncode}"
