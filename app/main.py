@@ -58,7 +58,9 @@ def main():
 
     call = toolCalls[0]
 
-    toolHandle(call)
+    result = toolHandle(call)
+    print(result)
+    return
 
 
 
