@@ -50,7 +50,7 @@ def main():
 
     toolCalls = chat.choices[0].tool_calls;
 
-    if (not(toolCalls) || toolCalls.length == 0)
+    if (not(toolCalls) or toolCalls.length == 0)
         return assistantMessage.content
 
     call = toolCalls[0]
