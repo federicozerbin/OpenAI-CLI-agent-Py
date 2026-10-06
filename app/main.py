@@ -72,9 +72,9 @@ def main():
             result = f"Error: {e}"
 
         messages.append({
-            role: "tool",
-            tool_call_id: call.id,
-            content: str(result),
+            "role": "tool",
+            "tool_call_id": call.id,
+            "content": str(result),
         })
 
         print(result)
