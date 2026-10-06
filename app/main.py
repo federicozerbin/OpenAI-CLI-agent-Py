@@ -1,9 +1,21 @@
 import argparse
 import os
 import sys
+import yaml
+
+testo = """
+name: commit
+description: Crea un commit
+tags: [git, utils]
+"""
+
+dati = yaml.safe_load(testo)
+print(dati["name"])   # commit
+print(dati["tags"])   # ['git', 'utils']
 
 from openai import OpenAI
 from app.tools import toolHandle
+from app.skills import skillHandle
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
@@ -76,7 +88,7 @@ def main():
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
-    messages = [{"role": "user", "content": args.p}]
+    messages = [{"role": "user", "content": prompt}]
 
     while True:
         chat = client.chat.completions.create(
@@ -99,6 +111,8 @@ def main():
 
         for call in toolCalls:
             functionName = call.function.name
+            if functionName == "Skill"
+                skills = skillHandle(call)
             try:
                 result = toolHandle(call)
             except Exception as e:
