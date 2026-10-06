@@ -50,7 +50,7 @@ def main():
     assistantMessage = chat.choices[0].message
     messages.append(assistantMessage)
 
-    toolCalls = chat.choices[0].tool_calls
+    toolCalls = chat.choices[0].message.tool_calls
 
     if not toolCalls:
         print(assistantMessage.content)
