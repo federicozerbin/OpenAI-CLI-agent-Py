@@ -3,7 +3,7 @@ import os
 import sys
 
 from openai import OpenAI
-from "./tools.py" import toolHandle
+from tools import toolHandle
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
@@ -18,6 +18,8 @@ def main():
         raise RuntimeError("OPENROUTER_API_KEY is not set")
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
+
+    messages = [{"role": "user", "content": args.p}]
 
     chat = client.chat.completions.create(
         model="anthropic/claude-haiku-4.5",
@@ -46,12 +48,13 @@ def main():
         raise RuntimeError("no choices in response")
 
     assistantMessage = chat.choices[0].message
-    messages.push(assistantMessage)
+    messages.append(assistantMessage)
 
     toolCalls = chat.choices[0].tool_calls
 
-    if (not(toolCalls) or toolCalls.length == 0):
-        return assistantMessage.content
+    if not toolCalls:
+        print(assistantMessage.content)
+        return
 
     call = toolCalls[0]
 
