@@ -3,16 +3,6 @@ import os
 import sys
 import yaml
 
-testo = """
-name: commit
-description: Crea un commit
-tags: [git, utils]
-"""
-
-dati = yaml.safe_load(testo)
-print(dati["name"])   # commit
-print(dati["tags"])   # ['git', 'utils']
-
 from openai import OpenAI
 from app.tools import toolHandle
 from app.skills import skillHandle
