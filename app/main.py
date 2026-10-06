@@ -1,15 +1,14 @@
 import argparse
 import os
-import sys
-import yaml
+
 
 from openai import OpenAI
-from app.tools import toolHandle
-from app.skills import skillHandle
+from app.agent import startAgent
+
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
-
+model="anthropic/claude-haiku-4.5"
 TOOLS = [{
     "type": "function",
     "function": {
@@ -78,43 +77,12 @@ def main():
 
     client = OpenAI(api_key=API_KEY, base_url=BASE_URL)
 
-    messages = [{"role": "user", "content": prompt}]
+    skills, systemPrompt, resolvedUserPrompts = skillHandle(args.p)
 
-    while True:
-        chat = client.chat.completions.create(
-            model="anthropic/claude-haiku-4.5",
-            messages=messages,
-            tools=TOOLS,
-        )
+    messages = [{"role": "user", "content": systemPrompt}, *resolvedUserPrompts]
 
-        if not chat.choices:
-            raise RuntimeError("no choices in response")
-
-        assistantMessage = chat.choices[0].message
-        messages.append(assistantMessage)
-
-        toolCalls = assistantMessage.tool_calls
-
-        if not toolCalls:
-            print(assistantMessage.content)
-            return
-
-        for call in toolCalls:
-            functionName = call.function.name
-            if functionName == "Skill"
-                skills = skillHandle(call)
-            try:
-                result = toolHandle(call)
-            except Exception as e:
-                print("Tool error:", functionName, e, file=sys.stderr)
-                result = f"Error: {e}"
-
-            messages.append({
-                "role": "tool",
-                "tool_call_id": call.id,
-                "content": str(result),
-            })
-
+    answer = startAgent(client, model, messages, TOOLS, skills)
+    print(answer)
 
 if __name__ == "__main__":
     main()
