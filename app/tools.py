@@ -14,6 +14,6 @@ def toolHandle(call):
         dir_path = os.path.dirname(args["file_path"])
         if dir_path:
             os.makedirs(dir_path, exist_ok=True)
-            with open(file_path, "w", encoding="utf-8") as f:
-                f.write(content)
-                return f"file written in: {file_path}"
+            with open(args["file_path"], "w", encoding="utf-8") as f:
+                f.write(args["content"])
+                return f"file written in: {args["file_path"]}"
