@@ -1,7 +1,5 @@
 import argparse
 import os
-
-
 from openai import OpenAI
 from app.agent import startAgent
 from app.skills import skillHandle
