@@ -46,7 +46,7 @@ def main():
         raise RuntimeError("no choices in response")
 
     assistantMessage = chat.choices[0].message;
-        messages.push(assistantMessage);
+    messages.push(assistantMessage);
 
     toolCalls = chat.choices[0].tool_calls;
 
