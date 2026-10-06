@@ -1,4 +1,5 @@
 import argparse
+from http import client
 import os
 from openai import OpenAI
 from app.agent import startAgent
@@ -93,9 +94,13 @@ def main():
 
     skills, systemPrompt, resolvedUserPrompts = skillHandle(args.p)
 
-    messages = [{"role": "user", "content": systemPrompt}, *resolvedUserPrompts]
+    tools = TOOLS if skills else [t for t in TOOLS if t["function"]["name"] != "Skill"]
 
-    answer = startAgent(client, model, messages, TOOLS, skills)
+    messages = list(resolvedUserPrompts)
+    if skills:
+        messages.insert(0, {"role": "user", "content": systemPrompt})
+
+    answer = startAgent(client, model, messages, tools, skills)
     print(answer)
 
 if __name__ == "__main__":
