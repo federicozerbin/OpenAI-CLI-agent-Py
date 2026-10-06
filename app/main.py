@@ -45,17 +45,17 @@ def main():
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response")
 
-    assistantMessage = chat.choices[0].message;
-    messages.push(assistantMessage);
+    assistantMessage = chat.choices[0].message
+    messages.push(assistantMessage)
 
-    toolCalls = chat.choices[0].tool_calls;
+    toolCalls = chat.choices[0].tool_calls
 
-    if (not(toolCalls) or toolCalls.length == 0)
+    if (not(toolCalls) or toolCalls.length == 0):
         return assistantMessage.content
 
     call = toolCalls[0]
 
-    toolHandle(call);
+    toolHandle(call)
 
 
 
