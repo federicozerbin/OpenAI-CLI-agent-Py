@@ -3,6 +3,7 @@ import os
 import sys
 
 from openai import OpenAI
+from tools import toolHandle
 
 API_KEY = os.getenv("OPENROUTER_API_KEY")
 BASE_URL = os.getenv("OPENROUTER_BASE_URL", default="https://openrouter.ai/api/v1")
@@ -44,10 +45,24 @@ def main():
     if not chat.choices or len(chat.choices) == 0:
         raise RuntimeError("no choices in response")
 
+    assistantMessage = chat.choices[0].message;
+        messages.push(assistantMessage);
+
+    toolCalls = chat.choices[0].tool_calls;
+
+    if (!toolCalls?.length)
+        return assistantMessage.content
+
+    call = toolCalls[0]
+
+    toolHandle(call);
+
+
+
+
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
 
-    # TODO: Uncomment the following line to pass the first stage
     print(chat.choices[0].message.content)
 
 
