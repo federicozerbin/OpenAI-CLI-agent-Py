@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import json
 
 from openai import OpenAI
 from app.tools import toolHandle
@@ -56,11 +57,28 @@ def main():
         print(assistantMessage.content)
         return
 
-    call = toolCalls[0]
+    for call in toolCalls:
+        functionName = call.function.name;
+        result = ""
+        try:
+            if functionName == "Skill":
+                #future subagent call
+                pass #result = await runSkill(client, model, tools, skills, functionParameters);
+            else:
+                #normal call
+                result = toolHandle(call)
+        except Exception as e:
+            print("Tool error:", functionName, e, file=sys.stderr)
+            result = f"Error: {e}"
 
-    result = toolHandle(call)
-    print(result)
-    return
+        messages.append({
+            role: "tool",
+            tool_call_id: call.id,
+            content: str(result),
+        })
+
+        print(result)
+        return
 
     # You can use print statements as follows for debugging, they'll be visible when running tests.
     print("Logs from your program will appear here!", file=sys.stderr)
