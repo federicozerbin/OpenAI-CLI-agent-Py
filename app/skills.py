@@ -61,7 +61,7 @@ def runSkill(client, model, tools, skills, params):
     name, args = params.get("name"), params.get("args")
     expanded = expandSkill(skills, name, args)
     if not expanded:
-        return f"Error: skill '{params.name}' not found"
+        return f"Error: skill '{name}' not found"
 
     #skill with no context return body
     if expanded["skill"]["context"] != "fork":
