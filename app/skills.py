@@ -71,7 +71,7 @@ def runSkill(client, model, tools, skills, params):
     subMessages = [{"role": "user", "content": expanded["text"]}]
     answer = startAgent(client, model, subMessages, tools, skills)
 
-    return f"Skill {params.name} ran in a separate context and returned: {answer}";
+    return f"Skill {name} ran in a separate context and returned: {answer}";
 
 def buildSystemPrompt(skills):
     items = "\n".join(f"- {s['name']}: {s['description']}" for s in skills)
